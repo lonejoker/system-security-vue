@@ -6,7 +6,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" @click="search()">查询</el-button>
-                <el-button icon="el-icon-refresh-right">重置</el-button>
+                <el-button icon="el-icon-refresh-right" @click="reset()">重置</el-button>
                 <el-button type="success" icon="el-icon-plus" @click="openAddWindow()">新增</el-button>
             </el-form-item>
         </el-form>
@@ -168,8 +168,12 @@ export default {
         onConfirm() {
             this.$refs.deptForm.validate(async (valid) => {
                 if (valid) {
-                    // 后端返回数据
-                    let res = await departmentApi.addDept(this.dept)
+                    let res = null;
+                    if (this.dept.id === '') {
+                        res = await departmentApi.addDept(this.dept)
+                    } else {
+                        res = await departmentApi.updateDept(this.dept)
+                    }
                     if (res.success) {
                         this.$message.success(res.message)
                         this.search()
@@ -192,9 +196,45 @@ export default {
             }
         },
         // 编辑
-        handleEdit(row) { },
+        handleEdit(row) {
+            //数据回显  
+            this.$objCopy(row, this.dept);
+            //设置窗口标题  
+            this.deptDialog.title = "编辑部门";
+            //显示编辑部门窗口  
+            this.deptDialog.visible = true;
+        },
         // 删除
-        handleDelete(row) { },
+        async handleDelete(row) {
+            //查询部门下是否存在子部门或用户
+            let result = await departmentApi.checkDepartment({ id: row.id });
+            //判断是否可以删除
+            if (!result.success) {
+                //提示不能删除        
+                this.$message.warning(result.message);
+            } else {
+                //确认是否删除      
+                let confirm = await this.$myconfirm("确定要删除该数据吗?");
+                if (confirm) {
+                    //发送删除请求            
+                    let res = await departmentApi.deleteById({ id: row.id });
+                    //判断是否成功           
+                    if (res.success) {
+                        //成功提示               
+                        this.$message.success(res.message);
+                        //刷新
+                        this.search();
+                    } else {
+                        //失败提示                
+                        this.$message.error(res.message);
+                    }
+                }
+            }
+        },
+        reset() {
+            this.searchModel.departmentName = ""
+            this.search()
+        }
     },
 };
 </script>

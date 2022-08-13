@@ -28,6 +28,10 @@ Vue.prototype.$myconfirm = myconfirm;
 import resetForm from '@/utils/resetForm' 
 Vue.prototype.$resetForm = resetForm;
 
+//导入快速复制对象工具 
+import objCopy from '@/utils/objCopy' 
+Vue.prototype.$objCopy = objCopy;
+
 
 
 Vue.use(Element, {
