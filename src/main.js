@@ -24,6 +24,11 @@ import * as filters from './filters' // global filters
 import myconfirm from '@/utils/myconfirm' 
 Vue.prototype.$myconfirm = myconfirm;
 
+//导入清空表单工具 
+import resetForm from '@/utils/resetForm' 
+Vue.prototype.$resetForm = resetForm;
+
+
 
 Vue.use(Element, {
   size: Cookies.get('size') || 'medium', // set element-ui default size
