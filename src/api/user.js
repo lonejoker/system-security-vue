@@ -11,3 +11,7 @@ export async function getInfo() {
 export async function logout(params) {
   return await http.post("/api/sysUser/logout", params);
 }
+
+export async function getMenuList(){
+    return await http.get("/api/sysUser/getMenuList")
+}
