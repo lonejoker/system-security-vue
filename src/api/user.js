@@ -12,6 +12,15 @@ export async function logout(params) {
   return await http.post("/api/sysUser/logout", params);
 }
 
-export async function getMenuList(){
-    return await http.get("/api/sysUser/getMenuList")
+export async function getMenuList() {
+  return await http.get("/api/sysUser/getMenuList");
 }
+
+export default {
+  /**
+   * 查询用户列表
+   */
+  async getUserList(params) {
+    return await http.get("/api/sysUser/list", params);
+  },
+};
