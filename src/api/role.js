@@ -36,3 +36,17 @@ export async function checkRole(params) {
 export async function deleteRole(params) {
   return await http.delete("/api/sysRole/delete", params);
 }
+
+/**
+ * 查询分配权限树列表
+ */
+export async function getAssignTree(params) {
+  return await http.get("/api/sysRole/getAssignPermissionTree", params);
+}
+
+/**
+ * 分配权限
+ */
+export async function assignSaveApi(params) {
+  return await http.post("/api/sysRole/saveRoleAssign", params);
+}
