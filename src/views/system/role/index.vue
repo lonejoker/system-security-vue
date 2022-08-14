@@ -54,7 +54,7 @@
 </template>
 <script>
 //导入role.js脚本 
-import { getRoles, addRole, updateRole } from '@/api/role';
+import { getRoles, addRole, updateRole, checkRole, deleteRole } from '@/api/role';
 //导入对话框组件
 import SystemDialog from '@/components/system/SystemDialog.vue'
 export default {
@@ -203,7 +203,32 @@ export default {
         /**
          * 删除 
          */
-        handleDelete(row) { },
+        async handleDelete(row) {
+            //检查角色是否被使用
+            let result = await checkRole({ id: row.id });
+            //判断是否可以删除
+            if (!result.success) {
+                //提示不能删除        
+                this.$message.warning(result.message);
+            } else {
+                //确认是否删除      
+                let confirm = await this.$myconfirm("确定要删除该数据吗?");
+                if (confirm) {
+                    //发送删除请求            
+                    let res = await deleteRole({ id: row.id });
+                    //判断是否成功           
+                    if (res.success) {
+                        //成功提示               
+                        this.$message.success(res.message);
+                        //刷新
+                        this.search();
+                    } else {
+                        //失败提示                
+                        this.$message.error(res.message);
+                    }
+                }
+            }
+        },
         /**
          * 分配角色
          */

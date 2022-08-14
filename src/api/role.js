@@ -23,4 +23,16 @@ export async function updateRole(data) {
   return await http.put("/api/sysRole/update", data);
 }
 
-export function deleteRole(id) {}
+/**
+ * 检查角色是否被使用
+ */
+export async function checkRole(params) {
+  return await http.getRestApi("/api/sysRole/check", params);
+}
+
+/**
+ * 删除角色
+ */
+export async function deleteRole(params) {
+  return await http.delete("/api/sysRole/delete", params);
+}
