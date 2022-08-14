@@ -22,7 +22,14 @@
             <el-table-column prop="name" label="路由名称"></el-table-column>
             <el-table-column prop="path" label="理由地址"></el-table-column>
             <el-table-column prop="url" label="组件路径"></el-table-column>
-            <el-table-column label="操作"></el-table-column>
+            <el-table-column label="操作">
+                <template slot-scope="scope">
+                    <el-button icon="el-icon-edit-outline" type="primary" size="small" @click="handleEdit(scope.row)">编辑
+                    </el-button>
+                    <el-button icon="el-icon-close" type="danger" size="small" @click="handleDelete(scope.row.id)">删除
+                    </el-button>
+                </template>
+            </el-table-column>
         </el-table>
         <system-dialog :title="menuDialog.title" :width="menuDialog.width" :height="menuDialog.height"
             :visible="menuDialog.visible" @onClose="onClose" @onConfirm="onConfirm">
@@ -164,6 +171,45 @@ export default {
         });
     },
     methods: {
+        // 编辑菜单
+        handleEdit(row) {
+            //把当前要编辑的数据复制到数据域，给表单回显  
+            this.$objCopy(row, this.menu);
+            //设置弹框属性  
+            this.menuDialog.title = "编辑菜单";
+            this.menuDialog.visible = true;
+            //菜单图标回显
+            this.$nextTick(() => {
+                this.$refs["child"].userChooseIcon = row.icon;
+            })
+        },
+        // 删除菜单
+        async handleDelete(id) {
+            //判断是否存在子菜单
+            let result = await menuApi.checkPermission({ id: id });
+            //判断是否可以删除
+            if (!result.success) {
+                //提示不能删除
+                this.$message.warning(result.message);
+            } else {
+                //确认是否删除
+                let confirm = await this.$myconfirm("确定要删除该数据吗?");
+                if (confirm) {
+                    //发送删除请求
+                    let res = await menuApi.deleteById({ id: id });
+                    //判断是否成功
+                    if (res.success) {
+                        //成功提示
+                        this.$message.success(res.message);
+                        //刷新
+                        this.search();
+                    } else {
+                        //失败提示 
+                        this.$message.error(res.message);
+                    }
+                }
+            }
+        },
         // 选择所属菜单
         async selectParentMenu() {
             //显示窗口      
@@ -206,16 +252,20 @@ export default {
                         //发送添加请求     
                         res = await menuApi.addMenu(this.menu);
                     } else {
-                        //发送修改请求        
+                        //发送修改请求
+                        res = await menuApi.updateMenu(this.menu);
                     }
                     //判断是否成功 
                     if (res.success) {
                         this.$message.success(res.message);
                         //刷新      
                         this.search();
+                        // window.location.reload()
                         //关闭窗口     
                         this.menuDialog.visible = false;
-                    } else { this.$message.error(res.message); }
+                    } else {
+                        this.$message.error(res.message);
+                    }
                 }
             })
         },

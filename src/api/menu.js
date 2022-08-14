@@ -20,4 +20,23 @@ export default {
   async addMenu(params) {
     return await http.post("/api/sysPermission/add", params);
   },
+  /**
+   * 修改菜单
+   */
+  async updateMenu(params) {
+    return await http.post("/api/sysPermission/update", params);
+  },
+  /**
+   * 检查菜单下是否存在子菜单
+   */
+  async checkPermission(param) {
+    return await http.getRestApi("/api/sysPermission/check", param);
+  },
+  /**
+   * 删除菜单
+   * @returns
+   */
+  async deleteById(params) {
+    return await http.delete("/api/sysPermission/delete", params);
+  },
 };
