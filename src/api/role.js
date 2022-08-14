@@ -9,8 +9,18 @@ export async function getRoles(params) {
   return await http.get("/api/sysRole/list", params);
 }
 
-export function addRole(data) {}
+/**
+ * 添加角色
+ */
+export async function addRole(data) {
+  return await http.post("/api/sysRole/add", data);
+}
 
-export function updateRole(id, data) {}
+/**
+ * 修改角色
+ */
+export async function updateRole(data) {
+  return await http.put("/api/sysRole/update", data);
+}
 
 export function deleteRole(id) {}
