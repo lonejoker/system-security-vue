@@ -64,6 +64,72 @@
                 :current-page="pageNo" :page-sizes="[10, 20, 30, 40, 50]" :page-size="10"
                 layout="total, sizes, prev, pager, next, jumper" :total="total">
             </el-pagination>
+            <!-- 添加和编辑用户窗口 -->
+            <system-dialog :title="userDialog.title" :height="userDialog.height" :width="userDialog.width"
+                :visible="userDialog.visible" @onClose="onClose" @onConfirm="onConfirm">
+                <div slot="content">
+                    <el-form :model="user" ref="userForm" :rules="rules" label-width="80px" :inline="true" size="small">
+                        <el-form-item prop="username" label="用户名">
+                            <el-input v-model="user.username"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="password" v-if="user.id === ''" label="密码">
+                            <el-input type="password" v-model="user.password"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="departmentName" label="所属部门">
+                            <el-input v-model="user.departmentName" :readonly="true" @click.native="selectDepartment()">
+                            </el-input>
+                        </el-form-item>
+                        <el-form-item prop="realName" label="姓名">
+                            <el-input v-model="user.realName"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="phone" label="电话">
+                            <el-input v-model="user.phone"></el-input>
+                        </el-form-item>
+                        <el-form-item label="昵称">
+                            <el-input v-model="user.nickName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="邮箱">
+                            <el-input v-model="user.email"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="gender" label="性别">
+                            <el-radio-group v-model="user.gender">
+                                <el-radio :label="0">男</el-radio>
+                                <el-radio :label="1">女</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <br>
+                        <!-- 用户头像：待补充 -->
+                        <el-form-item label="头像">
+                            <el-upload :show-file-list="false" :on-success="handleAvatarSuccess"
+                                :before-upload="beforeAvatarUpload" class="avatar-uploader" :headers="uploadHeader"
+                                action="http://localhost:8888/api/oss/file/upload?module=avatar">
+                                <img v-if="user.avatar" :src="user.avatar">
+                                <i v-else class="el-icon-plus avatar-uploader-icon" />
+                            </el-upload>
+                        </el-form-item>
+                    </el-form>
+                </div>
+            </system-dialog>
+            <!-- 所属部门弹框 -->
+            <system-dialog :title="parentDialog.title" :width="parentDialog.width" :height="parentDialog.height"
+                :visible="parentDialog.visible" @onClose="onParentClose" @onConfirm="onParentConfirm">
+                <div slot="content">
+                    <el-tree ref="parentTree" :data="parentList" default-expand-all node-key="id" :props="parentProps"
+                        :show-checkbox="false" :highlight-current="true" :expand-on-click-node="false"
+                        @node-click="parentClick">
+                        <div class="customer-tree-node" slot-scope="{ node, data }">
+                            <span v-if="data.children.length == 0">
+                                <i class="el-icon-document" />
+                            </span>
+                            <span v-else @click.stop="openParentBtn(data)">
+                                <svg-icon v-if="data.open" icon-class="add-s" />
+                                <svg-icon v-else icon-class="sub-s" />
+                            </span>
+                            <span style="margin-left: 3px">{{ node.label }}</span>
+                        </div>
+                    </el-tree>
+                </div>
+            </system-dialog>
         </el-main>
     </el-container>
 </template>
@@ -72,9 +138,27 @@
 import departmentApi from '@/api/department';
 //导入用户api脚本
 import userApi from '@/api/user';
+//导入对话框组件
+import SystemDialog from '@/components/system/SystemDialog.vue'
+//导入token
+import { getToken } from '@/utils/auth'
 export default {
     name: "User",
+    components: {
+        SystemDialog
+    },
     data() {
+        //自定义验证规则   
+        let validatePhone = (rule, value, callback) => {
+            if (!value) {
+                callback(new Error("请输入手机号码"));
+                //使用正则表达式进行验证手机号码       
+            } else if (!/^1[3456789]\d{9}$/.test(value)) {
+                callback(new Error("手机号格式不正确"));
+            } else {
+                callback();
+            }
+        };
         return {
             containerHeight: 0, //容器高度 
             deptList: [], //左侧部门树形菜单列表 
@@ -83,7 +167,7 @@ export default {
                 children: 'children',
                 label: 'departmentName'
             },
-            //查询条件对象     
+            //查询条件对象     
             searchModel: {
                 username: "",
                 realName: "",
@@ -98,6 +182,52 @@ export default {
             pageSize: 10, //每页显示数量
             total: 0, //总数量
             departmentId: "", //部门编号
+            //添加和修改用户窗口属性
+            userDialog: {
+                title: '',
+                height: 410,
+                width: 610,
+                visible: false
+            },
+            //用户对象
+            user: {
+                id: '',
+                departmentId: '',
+                departmentName: '',
+                email: '',
+                realName: '',
+                phone: '',
+                nickName: '',
+                password: '',
+                username: '',
+                gender: '',
+                avatar: ''
+            },
+            rules: {
+                departmentName: [{ required: true, trigger: 'change', message: '请选择所属 部门' }],
+                realName: [{ required: true, trigger: 'blur', message: '请填写姓名' }],
+                phone: [{ trigger: 'blur', validator: validatePhone }],
+                username: [{ required: true, trigger: 'blur', message: '请填写登录名' }],
+                password: [{ required: true, trigger: 'blur', message: '请填写登录密码' }],
+                gender: [{ required: true, trigger: 'change', message: '请选择性别' }]
+            },
+            //选择所属部门窗口属性     
+            parentDialog: {
+                title: '选择所属部门',
+                width: 300,
+                height: 450,
+                visible: false
+            },
+            // 树节点属性
+            parentProps: {
+                children: 'children',
+                label: 'departmentName'
+            },
+            parentList: [], //所属部门节点数据
+            // 上传需要携带的数据
+            uploadHeader: {
+                "token": getToken()
+            }
         };
     },
     created() {
@@ -108,7 +238,7 @@ export default {
         this.$nextTick(() => {
             //内容高度      
             this.containerHeight = window.innerHeight - 85;
-            //表格高度    
+            //表格高度    
             this.tableHeight = window.innerHeight - 220;
         })
     },
@@ -162,33 +292,157 @@ export default {
          * 当每页数量发生变化时触发该事件
          */
         handleSizeChange(size) {
-            this.pageSize = size; //将每页显示的数量交给成员变量     
+            this.pageSize = size; //将每页显示的数量交给成员变量     
             this.search(this.departmentId, this.pageNo, size);
         },
         /**
          * 当页码发生变化时触发该事件
          */
         handleCurrentChange(page) {
-            this.pageNo = page; //调用查询方法  
+            this.pageNo = page; //调用查询方法  
             this.search(this.departmentId, page, this.pageSize);
         },
         // 重置
         resetValue() {
             //清空查询条件
             this.searchModel = {};
-            //重新查询     
+            //重新查询     
             this.search(this.departmentId);
         },
         /**
          * 打开添加窗口
          */
         openAddWindow() {
-
+            this.$resetForm('userForm', this.user) //清空表单  
+            this.userDialog.visible = true //显示窗口     
+            this.userDialog.title = '新增用户' //设置标题 
+        },
+        /**
+         * 新增或编辑取消事件
+         */
+        onClose() {
+            this.userDialog.visible = false //关闭窗口  
+        },
+        /**
+         * 新增或编辑确认事件
+         */
+        onConfirm() {
+            //表单验证    
+            this.$refs.userForm.validate(async (valid) => {
+                if (valid) {
+                    let res = null
+                    //判断用户ID是否为空     
+                    if (this.user.id === '') {
+                        //发送添加请求     
+                        res = await userApi.addUser(this.user)
+                    } else {
+                        //发送修改请求
+                        res = await userApi.updateUser(this.user)
+                    }
+                    //判断是否成功   
+                    if (res.success) {
+                        this.$message.success(res.message)
+                        //刷新       
+                        this.search(this.departmentId, this.pageNo, this.pageSize);
+                        //关闭窗口     
+                        this.userDialog.visible = false
+                    } else {
+                        this.$message.error(res.message)
+                    }
+                }
+            })
+        },
+        /**
+         * 打开选择所属部门窗口
+         */
+        async selectDepartment() {
+            //查询所属部门数据    
+            let res = await departmentApi.getDepartmentList(null)
+            //判断是否成功 
+            if (res.success) {
+                this.parentList = res.data
+            }
+            //显示窗口   
+            this.parentDialog.visible = true
+        },
+        /**
+         * 选择所属部门取消事件 
+         */
+        onParentClose() {
+            this.parentDialog.visible = false //关闭窗口 
+        },
+        /**
+         * 选择所属部门确认事件 
+         */
+        onParentConfirm() {
+            this.parentDialog.visible = false
+        },
+        // 所属部门树节点点击事件 
+        parentClick(data) {
+            this.user.departmentId = data.id
+            this.user.departmentName = data.departmentName
+        },
+        // 所属部门树加号 减号 图标点击事件
+        openParentBtn(data) {
+            data.open = !data.open
+            this.$refs.parentTree.store.nodesMap[data.id].expanded = !data.open
+        },
+        /**
+         * 上传成功回调
+         */
+        handleAvatarSuccess(res, file) {
+            this.user.avatar = res.data
+            // 强制重新渲染 
+            this.$forceUpdate()
+        },
+        /**
+         * 上传校验
+         */
+        beforeAvatarUpload(file) {
+            const isJPG = file.type === 'image/jpeg'
+            const isLt2M = file.size / 1024 / 1024 < 2
+            if (!isJPG) {
+                this.$message.error('上传头像图片只能是 JPG 格式!')
+            }
+            if (!isLt2M) {
+                this.$message.error('上传头像图片大小不能超过 2MB!')
+            }
+            return isJPG && isLt2M
+        },
+        /**
+         * 编辑用户
+         */
+        handleEdit(row) {
+            //设置弹框属性
+            this.userDialog.title = '编辑用户'
+            this.userDialog.visible = true
+            //把当前编辑的数据复制到表单数据域，供回显使用  
+            this.$objCopy(row, this.user)
+        },
+        /**
+         * 删除用户
+         */
+        async handleDelete(row) {
+            let confirm = await this.$myconfirm('确定要删除该数据吗?')
+            if (confirm) {
+                //封装条件  
+                let params = { id: row.id }
+                //发送删除请求   
+                let res = await userApi.deleteUser(params)
+                //判断是否成功 
+                if (res.success) {
+                    this.$message.success(res.message)
+                    //刷新     
+                    this.search(this.departmentId, this.pageNo, this.pageSize);
+                } else {
+                    this.$message.error(res.message)
+                }
+            }
         }
     },
 };
 </script>
-<style lang="scss" scoped>
+<style lang="scss">
 ::v-deep .el-tree {
     .el-tree-node {
         position: relative;
@@ -262,5 +516,33 @@ export default {
     &::after {
         display: none;
     }
+}
+
+// 用户头像
+.avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9 !important;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+}
+
+.avatar-uploader .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+}
+
+.avatar-uploader img {
+    width: 178px;
+    height: 178px;
+    display: block;
 }
 </style>

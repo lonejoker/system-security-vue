@@ -23,4 +23,22 @@ export default {
   async getUserList(params) {
     return await http.get("/api/sysUser/list", params);
   },
+  /**
+   * 添加用户
+   */
+  async addUser(params) {
+    return await http.post("/api/sysUser/add", params);
+  },
+  /**
+   * 编辑用户
+   */
+  async updateUser(params) {
+    return await http.put("/api/sysUser/update", params);
+  },
+  /**
+   * 删除用户
+   */
+  async deleteUser(params) {
+    return await http.delete("/api/sysUser/delete", params);
+  },
 };
