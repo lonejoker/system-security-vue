@@ -1,38 +1,16 @@
-import request from '@/utils/request'
+import http from "@/utils/request";
 
-export function getRoutes() {
-  return request({
-    url: '/vue-element-admin/routes',
-    method: 'get'
-  })
+export function getRoutes() {}
+
+/**
+ * 查询角色列表
+ */
+export async function getRoles(params) {
+  return await http.get("/api/sysRole/list", params);
 }
 
-export function getRoles() {
-  return request({
-    url: '/vue-element-admin/roles',
-    method: 'get'
-  })
-}
+export function addRole(data) {}
 
-export function addRole(data) {
-  return request({
-    url: '/vue-element-admin/role',
-    method: 'post',
-    data
-  })
-}
+export function updateRole(id, data) {}
 
-export function updateRole(id, data) {
-  return request({
-    url: `/vue-element-admin/role/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-export function deleteRole(id) {
-  return request({
-    url: `/vue-element-admin/role/${id}`,
-    method: 'delete'
-  })
-}
+export function deleteRole(id) {}

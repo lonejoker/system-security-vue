@@ -25,6 +25,9 @@ const mutations = {
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
+  },
+  SET_USERUID: (state, userId) => {
+    state.userId = userId
   }
 }
 
@@ -54,7 +57,8 @@ const actions = {
           reject('Verification failed, please Login again.')
         }
 
-        const { roles, name, avatar, introduction } = data
+        //此处解构出用户ID
+        const { roles, name, avatar, introduction,id } = data
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
@@ -65,6 +69,8 @@ const actions = {
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         commit('SET_INTRODUCTION', introduction)
+        // 将用户ID保存到Vuex中
+        commit('SET_USERUID', id);//用户ID
         resolve(data)
       }).catch(error => {
         reject(error)
