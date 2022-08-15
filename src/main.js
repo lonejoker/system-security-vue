@@ -32,7 +32,9 @@ Vue.prototype.$resetForm = resetForm;
 import objCopy from '@/utils/objCopy' 
 Vue.prototype.$objCopy = objCopy;
 
-
+//导入按钮权限判断
+import hasPermission from '@/permission/index'
+Vue.prototype.hasPermission = hasPermission;
 
 Vue.use(Element, {
   size: Cookies.get('size') || 'medium', // set element-ui default size
