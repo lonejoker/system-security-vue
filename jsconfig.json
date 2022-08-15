@@ -1,6 +1,7 @@
 { 
   "compilerOptions": {
     "baseUrl": "./",
+    "jsx": "preserve",	//在这里添加"jsx": "preserve",
     "paths": {
         "@/*": ["src/*"]
     }
