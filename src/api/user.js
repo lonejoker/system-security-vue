@@ -41,4 +41,22 @@ export default {
   async deleteUser(params) {
     return await http.delete("/api/sysUser/delete", params);
   },
+  /**
+   * 查询用户角色列表
+   */
+  async getAssignRoleList(params) {
+    return await http.get("/api/sysUser/getRoleListForAssign", params);
+  },
+  /**
+   * 获取分配角色列表数据
+   */
+  async getRoleIdByUserId(params) {
+    return await http.getRestApi("/api/sysUser/getRoleByUserId", params);
+  },
+  /**
+   * 分配角色
+   */
+  async assignRoleSave(params) {
+    return await http.post("/api/sysUser/saveUserRole", params);
+  },
 };
