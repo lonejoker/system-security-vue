@@ -4,18 +4,70 @@ import {
   Message
 } from 'element-ui'
 import store from '@/store'
-import {
-  getToken
-} from '@/utils/auth'
+//导入auth脚本
+import {getToken,setToken,clearStorage,getTokenTime,setTokenTime,removeTokenTime} from '@/utils/auth'
+//导入刷新token的api脚本
+import { refreshTokenApi } from '@/api/user'
 import qs from 'qs'
 
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API,
-  timeout: 5000
+  timeout: 10000
 })
+
+/**
+ * 刷新token
+ */
+ function refreshTokenInfo() {
+    //设置请求参数
+    let param = {
+        token: getToken(),
+    };
+    return refreshTokenApi(param).then((res) => res);
+}
+
+//定义变量，标识是否刷新token
+let isRefresh = false;
 
 // 请求拦截
 service.interceptors.request.use(config => {
+
+    // 获取当前系统时间
+    let currentTime = new Date().getTime()
+    // 获取token过期时间
+    let expireTime = getTokenTime()
+    // 判断token是否过期
+    if(expireTime > 0){
+        // 计算时间
+        let min = (expireTime - currentTime) / 1000 /60
+        // 如果token离过期时间相差10分钟，则刷新token
+        if(min < 10){
+            // 判断是否刷新
+            if(!isRefresh){
+                // 标识刷新
+                isRefresh = true
+                // 调用刷新token方法
+                return refreshTokenInfo().then(res => {
+                    // 判断是否成功
+                    if(res.success){
+                        // 设置新的token和过期时间
+                        setToken(res.data.token)
+                        setTokenTime(res.data.expireTime)
+                        // 将新的token添加到header头部
+                        config.headers.token = getToken()
+                    }
+                    return config
+                }).catch(error =>{
+
+                }).finally(() =>{
+                    // 修改是否刷新token方法
+                    isRefresh = false
+                })
+            }
+        }
+    }
+
+
 //   console.log(config)
   if (store.getters.token) {
     config.headers['token'] = getToken()
@@ -23,6 +75,10 @@ service.interceptors.request.use(config => {
   return config
 }, error => { // do something with request error 
   console.log(error) // for debug    
+    //  清空sessionStorage
+    clearStorage();
+    //  清空token过期时间
+    removeTokenTime();
   return Promise.reject(error)
 })
 
@@ -44,6 +100,10 @@ service.interceptors.response.use(
           type: 'warning'
         }).then(() => {
           store.dispatch('user/resetToken').then(() => {
+            //清空sessionStorage
+            clearStorage();
+            //清空token过期时间
+            removeTokenTime();
             location.reload()
           })
         })
@@ -54,6 +114,10 @@ service.interceptors.response.use(
     }
   }, error => {
     console.log('err' + error)
+    //清空sessionStorage
+    clearStorage();
+    //清空token过期时间
+    removeTokenTime();
     Message({
       message: error.message,
       type: 'error',

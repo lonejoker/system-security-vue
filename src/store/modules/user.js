@@ -1,9 +1,10 @@
 import { login, logout, getInfo } from '@/api/user'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+// setTokenTime：设置token过期时间
+import { getToken, setToken, removeToken, setTokenTime} from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
 const state = {
-  token: getToken(),
+  token: getToken(), // 获取token信息
   name: '',
   avatar: '',
   introduction: '',
@@ -11,21 +12,27 @@ const state = {
 }
 
 const mutations = {
+    //  设置token信息
   SET_TOKEN: (state, token) => {
     state.token = token
   },
+    //   设置个人介绍
   SET_INTRODUCTION: (state, introduction) => {
     state.introduction = introduction
   },
+    //   设置用户姓名
   SET_NAME: (state, name) => {
     state.name = name
   },
+    //   设置用户头像
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
   },
+    //   设置用户对应角色
   SET_ROLES: (state, roles) => {
     state.roles = roles
   },
+    //   将用户id保存到store
   SET_USERUID: (state, userId) => {
     state.userId = userId
   }
@@ -37,9 +44,11 @@ const actions = {
     const { username, password } = userInfo
     return new Promise((resolve, reject) => {
       login({ username: username.trim(), password: password }).then(response => {
-        const { token } = response
+        const { token,expireTime } = response
         commit('SET_TOKEN', token)
         setToken(token)
+        // 设置过期时间
+        setTokenTime(expireTime)
         resolve()
       }).catch(error => {
         reject(error)
